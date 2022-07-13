@@ -9,7 +9,7 @@ const initialState = {
   things: []
 };
 
-const viewReducer = (state =window.location.hash.slice(1), action)=> { 
+const viewReducer = (state = window.location.hash.slice(1), action)=> { 
   if(action.type === 'SET_VIEW'){
     return action.view;
   }
@@ -19,6 +19,9 @@ const viewReducer = (state =window.location.hash.slice(1), action)=> {
 const usersReducer = (state = [], action)=> { 
   if(action.type === 'DELETE_USER'){
     return state.filter(user => user.id !== action.user.id )
+  }
+  if(action.type === 'UPDATE_USER'){
+    return state.map(user => user.id !== action.user.id ? user : action.user);
   }
   if(action.type === 'SET_USERS'){
     return action.users;
@@ -51,6 +54,7 @@ const reducer = combineReducers({
   view: viewReducer
 });
 
+
 const updateThing = (thing)=> {
   return async(dispatch)=> {
     thing = (await axios.put(`/api/things/${thing.id}`, thing)).data;
@@ -64,9 +68,54 @@ const deleteThing = (thing)=> {
   };
 };
 
+const createThing = () => {
+  return async(dispatch) => {
+    const response = await axios.post('/api/things', { name: Math.random()});
+    const thing = response.data;
+    dispatch({ type: 'CREATE_THING', thing });
+  }
+};
+
+const removeThingFromUser = (thing) => {
+  return async(dispatch) => {
+    thing = {...thing, userId: null}
+    const updatedThing = (await axios.put(`/api/things/${thing.id}`, thing)).data
+    dispatch({ type: 'UPDATE_THING', thing: updatedThing});
+  }
+};
+
+const deleteUser = (user) => {
+  return async(dispatch) => {
+    await axios.delete(`/api/users/${user.id}`);
+    dispatch({ type: 'DELETE_USER', user});
+  }
+}
+
+const createUser = () => {
+  return async(dispatch)=>{
+    const user = (await axios.post('/api/users', {name: Math.random()})).data;
+    dispatch({ type: 'CREATE_USER', user});
+  }
+};
+
+const updateUser = (user) => {
+  return async(dispatch) =>{
+    user = (await axios.put(`/api/users/${user.id}`, user)).data;
+    dispatch({type: 'UPDATE_USER', user});
+  }
+}
+
 const store = createStore(reducer, applyMiddleware(logger, thunk));
 
-export { deleteThing, updateThing };
+export { 
+  deleteThing, 
+  updateThing, 
+  createThing, 
+  removeThingFromUser, 
+  deleteUser, 
+  createUser,
+  updateUser 
+};
 
 export default store;
 
